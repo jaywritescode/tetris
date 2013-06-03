@@ -1,0 +1,21 @@
+.next-tetromino,
+.next-tetromino-i,
+.next-tetromino-j,
+.next-tetromino-l,
+.next-tetromino-o,
+.next-tetromino-s,
+.next-tetromino-t,
+.next-tetromino-z {
+    width: 100px;
+    height: 100px;
+    background: url('tetris-sprites.png') no-repeat;
+}
+
+.next-tetromino { background-position: 0 0; }
+.next-tetromino-o { background-position: -100px 0; }
+.next-tetromino-t { background-position: -200px 0; }
+.next-tetromino-i { background-position: -300px 0; }
+.next-tetromino-s { background-position: 0 -100px; }
+.next-tetromino-z { background-position: -100px -100px; }
+.next-tetromino-l { background-position: -200px -100px; }
+.next-tetromino-j { background-position: -300px -100px; }
