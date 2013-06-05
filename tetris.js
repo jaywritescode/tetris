@@ -4,23 +4,25 @@ require.config({
 
 define(['jquery', 'underscore'], function() {
     tetris = new Tetris($('#tetris').attr('tabindex', '0'));        // makes element focusable
-    
+
     /**
      * Construct a new Tetris game
      * @param {jQuery} $element The element we .append() the game to
      */
     function Tetris($element) {
         var $canvas, $score, $lines, $next, $start;
-        
+
         var score = 0, lines = 0, softDrop = 0, level = 1;
-        
+
         var matrix;
         var height = 19, width = 10;
-        
+
         var gameStates = { GAME_OVER: 0, RUNNING: 1, STOPPED: 2 };
         var gameState = gameStates.GAME_OVER;
         var timeoutId;
-                
+
+        $('head').append('<link rel="stylesheet" href="res/tetris-sprites.css" type="text/css" />');
+
         $element.append($canvas = $('<canvas id="tetris-canvas" width="200" height="400"></canvas')).
                  append($('<label for="tetris-score">Score: </label>')).
                  append($score = $('<span id="tetris-score">0</span>')).
@@ -29,13 +31,7 @@ define(['jquery', 'underscore'], function() {
                  append($next = $(document.createElement('div')).attr({
                      id: 'tetris-next-piece',
                      class: 'next-tetromino',
-                 })).
-                 append($('<button id="next">Next</button>').click( function() {
-                     if(!matrix) {
-                         init_matrix();
-                     }
-                     next();
-                 })).
+                 }).text("Next block:")).
                  append($start = $('<button id="start">Start New Game</button>').click( function() {
                      gameState == gameStates.RUNNING ? stop() : start();
                  })).
@@ -45,6 +41,8 @@ define(['jquery', 'underscore'], function() {
                      }
                  }).
                  keydown( function(event) {
+                     event.preventDefault();
+                     event.stopPropagation();
                      if(gameState != gameStates.GAME_OVER) {
                          switch(event.which) {
                              case 37: left(); break;
@@ -60,10 +58,10 @@ define(['jquery', 'underscore'], function() {
                  });
         var piecesQueue = new Array();
         var speed = 1000;
-        
+
         var tetrominoes = [OTetromino, ITetromino, TTetromino, STetromino, ZTetromino, LTetromino, JTetromino];
         var currentPiece = null;
-        
+
         var colors = {
             I: 'cyan',
             O: 'yellow',
@@ -73,7 +71,11 @@ define(['jquery', 'underscore'], function() {
             J: 'blue',
             L: 'orange'
         };
-        
+
+        /**
+         * Start (or re-start) the game. The pith here is the call to setInterval.
+         * @see stop
+         */
         function start() {
             if(gameState == gameStates.GAME_OVER) {
                 init_matrix();
@@ -83,15 +85,19 @@ define(['jquery', 'underscore'], function() {
                 softDrop = 0;
                 draw();
             }
-            
-            next();            
+
+            next();
             gameState = gameStates.RUNNING;
             timeoutId = setInterval( _.bind(function() {
                 next();
             }, tetris), speed);
             $start.text('Pause Game');
         }
-        
+
+        /**
+         * Stop (or pause) the game. The pith here is the call to clearInterval.
+         * @see start
+         */
         function stop() {
             clearInterval(timeoutId);
             if(gameState == gameStates.RUNNING) {
@@ -99,13 +105,16 @@ define(['jquery', 'underscore'], function() {
                 $start.text('Resume Game');
             }
         }
-        
+
+        /**
+         * Terminate the game.
+         */
         function gameover() {
             clearInterval(timeoutId);
             gameState = gameStates.GAME_OVER;
             $start.text('Start New Game');
         }
-        
+
         function init_matrix() {
             matrix = [];
             for(var row = 0; row < height + 3; ++row) {
@@ -116,17 +125,25 @@ define(['jquery', 'underscore'], function() {
             }
             return matrix;
         }
-        
+
+        /**
+         * Execute the next iteration of the game: drop the current piece one unit
+         * (if there is a current piece), clear out any completed lines, and retrieve
+         * the next piece in the queue if necessary.
+         * 
+         * @param event {Event} The event that triggered this call. This will be falsy
+         * if the method was called by the setInterval callback.
+         */
         function next(event) {
             var rows = {}, removed = 0;
-            
+
             if(currentPiece) {
                 if(!drop(event)) {
                     _(currentPiece.squares).forEach(function(val) {
                         matrix[val.y][val.x] = currentPiece.prototype.type;
                         rows[val.y] = true;
                     });
-                    
+
                     _(rows).keys().forEach(function(row) {
                         if(_(matrix[row]).every(function(square) { return !!square; })) {
                             matrix[row] = null;
@@ -135,7 +152,7 @@ define(['jquery', 'underscore'], function() {
                     });
                     if(removed) {
                         matrix = _(matrix).compact();
-                        while(matrix.length < height + 2) {
+                        for(var i = 0; i < removed; ++i) {
                             matrix.push(["", "", "", "", "", "", "", "", "", ""]);
                         }
                         updateLines(removed);
@@ -150,9 +167,9 @@ define(['jquery', 'underscore'], function() {
                     piecesQueue = piecesQueue.concat(_(tetrominoes).shuffle());
                 }
                 currentPiece = new (piecesQueue.shift())();
-                
+
                 $next.attr('class', 'next-tetromino-' + piecesQueue[0].prototype.type.toLowerCase());
-                
+
                 if(_(currentPiece.squares).any(function(theSquare) {
                     return theSquare.y > height + 2 || matrix[theSquare.y][theSquare.x];
                 })) {
@@ -160,39 +177,46 @@ define(['jquery', 'underscore'], function() {
                     return;
                 }
             }
-            
+
             draw();
         }
-        
+
         /**
          * Tries to drop the current piece one unit. Returns true on success
          * or false if the piece can't be dropped.
+         * 
+         * @param {Event} event The event that triggered this call. This will be falsy
+         * if the method was called by the setInterval callback.
+         * @return true iff the piece was successfully dropped
          */
-        function drop(caller) {
-            if(!currentPiece) { return; }
-            
+        function drop(event) {
             if(_(currentPiece.squares).all(function(theSquare) {
                 return theSquare.y > 0 && !matrix[theSquare.y - 1][theSquare.x];
             })) {
                 currentPiece.drop();
                 draw();
-                
-                if(caller && caller.type == 'keydown') {
+
+                if(event && event.type == 'keydown') {
                     ++softDrop;
                     clearInterval(timeoutId);
                     timeoutId = setInterval( _.bind(function() {
                         next();
                     }, tetris), speed);
                 }
-                
+
                 return true;
             }
             return false;
         }
-        
+
+        /**
+         * Move the current piece left, if possible.
+         * 
+         * @return true iff the piece was successfully moved
+         */
         function left() {
             if(!currentPiece) { return; }
-            
+
             if(_(currentPiece.squares).all(function(theSquare) {
                 return theSquare.x > 0 && !matrix[theSquare.y][theSquare.x - 1];
             })) {
@@ -202,7 +226,12 @@ define(['jquery', 'underscore'], function() {
             }
             return false;
         }
-        
+
+        /**
+         * Move the current piece right, if possible.
+         * 
+         * @return true iff the piece was successfully moved
+         */
         function right() {
             if(!currentPiece) { return; }
 
@@ -215,17 +244,23 @@ define(['jquery', 'underscore'], function() {
             }
             return false;
         }
-        
+
+        /**
+         * Rotate the current piece, if possible.
+         * 
+         * @param clockwise {Boolean} true to rotate clockwise, false for counterclockwise
+         * @return true iff the piece was successfully rotated
+         */
         function rotate(clockwise) {
-            if(!currentPiece) { return; }            
-            
+            if(!currentPiece) { return; }
+
             if(clockwise) {
                 currentPiece.rotateClockwise();
             }
             else {
                 currentPiece.rotateCounterClockwise();
             }
-            
+
             if(_(currentPiece.squares).any(function(theSquare) {
                 return theSquare.x < 0 || theSquare.x >= width || theSquare.y < 0 || matrix[theSquare.y][theSquare.x];
             })) {
@@ -240,30 +275,33 @@ define(['jquery', 'underscore'], function() {
             draw();
             return true;
         }
-        
+
+        /**
+         * Draw the game.
+         */
         function draw() {
             var canvas = $canvas.get(0), context = canvas.getContext('2d');
             var squareWidth = canvas.width / width, squareHeight = canvas.height / (height + 1);
-            
+
             context.fillStyle = 'white';
             context.fillRect(0, 0, canvas.width, canvas.height);
-            
+
             var c;
             for(var row = 0; row <= height; ++row) {
                 for(var column = 0; column < width; ++column) {
                     c = matrix[row][column];
-                    
+
                     if(!c) {
                         continue;
                     }
-                    
+
                     context.fillStyle = colors[c];
                     context.strokeRect(column * squareWidth, canvas.height - ((row + 1) * squareHeight), squareWidth, squareHeight);
                     context.fillRect(column * squareWidth + 1, canvas.height - ((row + 1) * squareHeight) + 1,
                             squareWidth - 2, squareHeight - 2);
                 }
             }
-            
+
             if(currentPiece) {
                 context.fillStyle = colors[currentPiece.prototype.type];
                 _(currentPiece.squares).each(function(theSquare) {
@@ -274,32 +312,39 @@ define(['jquery', 'underscore'], function() {
                 });
             }
         }
-                
-        function getPiecesQueue() { return piecesQueue; }
-        
+
+        /**
+         * Update the lines counter and the corresponding DOM element. (Also
+         * the level counter, and therefore the game speed).
+         * 
+         * @param {Number} amount The amount of lines to add to the counter.
+         */
         function updateLines(amount) {
             lines += amount;
             level = Math.floor(lines / 10) + 1;
-            speed = 1025 - (25 * level);
+            speed = 1050 - (50 * level);
             $lines.text(lines);
         }
-        
+
+        /**
+         * Update the score counter and the corresponding DOM element.
+         */
         function updateScore(amount) {
             $score.text(score += amount);
         }
-        
+
         /************************************************************
          * Tetromino classes.
          ************************************************************/
         /**
-         * Abstract tetromino constructor
+         * Abstract constructor.
          * @constructor
          */
         function Tetromino() {
             this.squares = new Array();
-            
+
             this.spawn();
-            
+
             /**
              * Move this tetromino one unit down. This method does not do collision testing;
              * that's the responsibility of the caller.
@@ -309,9 +354,9 @@ define(['jquery', 'underscore'], function() {
                     --theSquare.y;
                 });
             };
-            
+
             /**
-             * Move this tetromino one unit left. This method does not do collision testing; 
+             * Move this tetromino one unit left. This method does not do collision testing;
              * that's the responsibility of the caller.
              */
             this.left = function() {
@@ -319,7 +364,7 @@ define(['jquery', 'underscore'], function() {
                     --theSquare.x;
                 });
             };
-                
+
             /**
              * Move this tetromino one unit right. This method does not do collision testing;
              * that's the responsibility of the caller.
@@ -328,17 +373,17 @@ define(['jquery', 'underscore'], function() {
                 _.forEach(this.squares, function(theSquare) {
                     ++theSquare.x;
                 });
-            };    
-                
+            };
+
             this.rotateClockwise = _.identity;
             this.rotateCounterClockwise = _.identity;
         }
         Tetromino.prototype.Orientation = { HORIZONTAL: 0, VERTICAL: 1, DOWN: 0, LEFT: 1, UP: 2, RIGHT: 3 };
-        
+
         function OTetromino() {
             this.prototype = OTetromino.prototype;
             Tetromino.call(this);
-            
+
             this.rotateClockwise = this.rotateCounterClockwise = function() { return true; };
         };
         OTetromino.prototype = Object.create(Tetromino.prototype);
@@ -348,11 +393,11 @@ define(['jquery', 'underscore'], function() {
             return this;
         };
         OTetromino.prototype.type = "O";
-        
+
         function ITetromino() {
             this.prototype = ITetromino.prototype;
             Tetromino.call(this);
-            
+
             this.rotateClockwise = this.rotateCounterClockwise = this.rotate = function() {
                 if(this.orientation == this.Orientation.HORIZONTAL) {
                     this.squares[0] = {x: this.squares[0].x + 2, y: this.squares[0].y + 2};
@@ -374,11 +419,11 @@ define(['jquery', 'underscore'], function() {
             this.orientation = this.Orientation.HORIZONTAL;
         };
         ITetromino.prototype.type = "I";
-        
+
         function TTetromino() {
             this.prototype = TTetromino.prototype;
             Tetromino.call(this);
-            
+
             this.rotateClockwise = function() {
                 if(this.orientation == this.Orientation.UP) {
                     this.squares[0] = {x: this.squares[0].x + 1, y: this.squares[0].y + 1};
@@ -402,7 +447,7 @@ define(['jquery', 'underscore'], function() {
                 }
                 this.orientation = (this.orientation + 1) % 4;
             };
-            
+
             this.rotateCounterClockwise = function() {
                 if(this.orientation == this.Orientation.UP) {
                     this.squares[0] = {x: this.squares[0].x + 1, y: this.squares[0].y - 1};
@@ -434,11 +479,11 @@ define(['jquery', 'underscore'], function() {
             this.orientation = this.Orientation.UP;
         };
         TTetromino.prototype.type = "T";
-        
+
         function STetromino() {
             this.prototype = STetromino.prototype;
             Tetromino.call(this);
-            
+
             this.rotateClockwise = this.rotateCounterClockwise = this.rotate = function() {
                 if(this.orientation == this.Orientation.HORIZONTAL) {
                     this.squares[0] = {x: this.squares[0].x + 1, y: this.squares[0].y + 2};
@@ -450,7 +495,7 @@ define(['jquery', 'underscore'], function() {
                     this.squares[0] = {x: this.squares[0].x - 1, y: this.squares[0].y - 2};
                     this.squares[1] = {x: this.squares[1].x - 0, y: this.squares[1].y - 1};
                     this.squares[2] = {x: this.squares[2].x - 1, y: this.squares[2].y - 0};
-                    this.squares[3] = {x: this.squares[3].x - 0, y: this.squares[3].y + 1};                    
+                    this.squares[3] = {x: this.squares[3].x - 0, y: this.squares[3].y + 1};
                 }
                 this.orientation = (this.orientation + 1) % 2;
             };
@@ -462,11 +507,11 @@ define(['jquery', 'underscore'], function() {
             this.orientation = this.Orientation.HORIZONTAL;
         };
         STetromino.prototype.type = "S";
-        
+
         function ZTetromino() {
             this.prototype = ZTetromino.prototype;
             Tetromino.call(this);
-            
+
             this.rotateClockwise = this.rotateCounterClockwise = this.rotate = function() {
                 if(this.orientation == this.Orientation.HORIZONTAL) {
                     this.squares[0] = {x: this.squares[0].x + 2, y: this.squares[0].y + 1};
@@ -478,7 +523,7 @@ define(['jquery', 'underscore'], function() {
                     this.squares[0] = {x: this.squares[0].x - 2, y: this.squares[0].y - 1};
                     this.squares[1] = {x: this.squares[1].x - 1, y: this.squares[1].y - 0};
                     this.squares[2] = {x: this.squares[2].x - 0, y: this.squares[2].y - 1};
-                    this.squares[3] = {x: this.squares[3].x + 1, y: this.squares[3].y - 0};                    
+                    this.squares[3] = {x: this.squares[3].x + 1, y: this.squares[3].y - 0};
                 }
                 this.orientation = (this.orientation + 1) % 2;
             };
@@ -490,11 +535,11 @@ define(['jquery', 'underscore'], function() {
             this.orientation = this.Orientation.HORIZONTAL;
         };
         ZTetromino.prototype.type = "Z";
-        
+
         function LTetromino() {
             this.prototype = LTetromino.prototype;
             Tetromino.call(this);
-            
+
             this.rotateClockwise = function() {
                 if(this.orientation == this.Orientation.DOWN) {
                     this.squares[0] = {x: this.squares[0].x + 1, y: this.squares[0].y + 1};
@@ -518,7 +563,7 @@ define(['jquery', 'underscore'], function() {
                 }
                 this.orientation = (this.orientation + 1) % 4;
             };
-            
+
             this.rotateCounterClockwise = function() {
                 if(this.orientation == this.Orientation.DOWN) {
                     this.squares[0] = {x: this.squares[0].x + 1, y: this.squares[0].y - 1};
@@ -550,11 +595,11 @@ define(['jquery', 'underscore'], function() {
             this.orientation = this.Orientation.DOWN;
         };
         LTetromino.prototype.type = "L";
-        
+
         function JTetromino() {
             this.prototype = JTetromino.prototype;
             Tetromino.call(this);
-            
+
             this.rotateClockwise = function() {
                 if(this.orientation == this.Orientation.DOWN) {
                     this.squares[0] = {x: this.squares[0].x + 2, y: this.squares[0].y + 0};
@@ -578,7 +623,7 @@ define(['jquery', 'underscore'], function() {
                 }
                 this.orientation = (this.orientation + 1) % 4;
             };
-            
+
             this.rotateCounterClockwise = function() {
                 if(this.orientation == this.Orientation.DOWN) {
                     this.squares[0] = {x: this.squares[0].x + 0, y: this.squares[0].y - 2};
@@ -607,7 +652,7 @@ define(['jquery', 'underscore'], function() {
         JTetromino.prototype.constructor = JTetromino;
         JTetromino.prototype.spawn = function() {
             this.squares = [{x: 3, y: height + 1}, {x: 3, y: height}, {x: 4, y: height}, {x: 5, y: height}];
-            this.orientation = this.Orientation.DOWN;    
+            this.orientation = this.Orientation.DOWN;
         };
         JTetromino.prototype.type = "J";
     };
