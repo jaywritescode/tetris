@@ -131,7 +131,7 @@ define(['jquery', 'underscore'], function() {
          * (if there is a current piece), clear out any completed lines, and retrieve
          * the next piece in the queue if necessary.
          * 
-         * @param event {Event} The event that triggered this call. This will be falsy
+         * @param {Event} event The event that triggered this call. This will be falsy
          * if the method was called by the setInterval callback.
          */
         function next(event) {
@@ -248,7 +248,7 @@ define(['jquery', 'underscore'], function() {
         /**
          * Rotate the current piece, if possible.
          * 
-         * @param clockwise {Boolean} true to rotate clockwise, false for counterclockwise
+         * @param {Boolean} clockwise true to rotate clockwise, false for counterclockwise
          * @return true iff the piece was successfully rotated
          */
         function rotate(clockwise) {
