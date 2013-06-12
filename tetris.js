@@ -3,11 +3,12 @@ require.config({
 });
 
 define(['jquery', 'underscore'], function() {
-    tetris = new Tetris($('#tetris').attr('tabindex', '0'));        // makes element focusable
+    new Tetris($('#tetris').attr('tabindex', '0'));
 
     /**
      * Construct a new Tetris game
      * @param {jQuery} $element The element we .append() the game to
+     * @constructor
      */
     function Tetris($element) {
         var $canvas, $score, $lines, $next, $start;
@@ -24,38 +25,38 @@ define(['jquery', 'underscore'], function() {
         $('head').append('<link rel="stylesheet" href="res/tetris-sprites.css" type="text/css" />');
 
         $element.append($canvas = $('<canvas id="tetris-canvas" width="200" height="400"></canvas')).
-                 append($('<label for="tetris-score">Score: </label>')).
-                 append($score = $('<span id="tetris-score">0</span>')).
-                 append($('<label for="tetris-lines">Lines: </label>')).
-                 append($lines = $('<span id="tetris-lines">0</span>')).
+                 append($score = $('<span id="score">0</span>')).
+                 append($lines = $('<span id="lines">0</span>')).
                  append($next = $(document.createElement('div')).attr({
                      id: 'tetris-next-piece',
                      class: 'next-tetromino',
-                 }).text("Next block:")).
+                 })).
                  append($start = $('<button id="start">Start New Game</button>').click( function() {
                      gameState == gameStates.RUNNING ? stop() : start();
                  })).
-                 blur( function(event) {
+                 blur( function() {
                      if(gameState == gameStates.RUNNING) {
                          stop();
                      }
                  }).
-                 keydown( function(event) {
-                     event.preventDefault();
-                     event.stopPropagation();
+                 keydown( function(evt) {
+                     evt.preventDefault();
+                     evt.stopPropagation();
                      if(gameState != gameStates.GAME_OVER) {
-                         switch(event.which) {
+                         switch(evt.which) {
                              case 37: left(); break;
                              case 39: right(); break;
                              case 32:
-                             case 40: next(event); break;
+                             case 40: next(evt); break;
                              case 90: rotate(false); break;
                              case 88: rotate(true); break;
                              case 80: gameState == gameStates.RUNNING ? stop() : start(); break;
                              default: break;
                          }
                      }
+                     return false;
                  });
+                 
         var piecesQueue = new Array();
         var speed = 1000;
 
@@ -144,6 +145,8 @@ define(['jquery', 'underscore'], function() {
                         rows[val.y] = true;
                     });
 
+                    updateScore(softDrop * level);
+
                     _(rows).keys().forEach(function(row) {
                         if(_(matrix[row]).every(function(square) { return !!square; })) {
                             matrix[row] = null;
@@ -156,7 +159,7 @@ define(['jquery', 'underscore'], function() {
                             matrix.push(["", "", "", "", "", "", "", "", "", ""]);
                         }
                         updateLines(removed);
-                        updateScore(Math.pow(removed, 2) * 10 * level + softDrop * level);
+                        updateScore(Math.pow(removed, 2) * 10 * level);
                     }
                     currentPiece = null;
                     softDrop = 0;
@@ -380,6 +383,9 @@ define(['jquery', 'underscore'], function() {
         }
         Tetromino.prototype.Orientation = { HORIZONTAL: 0, VERTICAL: 1, DOWN: 0, LEFT: 1, UP: 2, RIGHT: 3 };
 
+        /**
+         * @constructor
+         */
         function OTetromino() {
             this.prototype = OTetromino.prototype;
             Tetromino.call(this);
@@ -394,6 +400,9 @@ define(['jquery', 'underscore'], function() {
         };
         OTetromino.prototype.type = "O";
 
+        /**
+         * @constructor
+         */
         function ITetromino() {
             this.prototype = ITetromino.prototype;
             Tetromino.call(this);
@@ -420,6 +429,9 @@ define(['jquery', 'underscore'], function() {
         };
         ITetromino.prototype.type = "I";
 
+        /**
+         * @constructor
+         */
         function TTetromino() {
             this.prototype = TTetromino.prototype;
             Tetromino.call(this);
@@ -480,6 +492,9 @@ define(['jquery', 'underscore'], function() {
         };
         TTetromino.prototype.type = "T";
 
+        /**
+         * @constructor
+         */
         function STetromino() {
             this.prototype = STetromino.prototype;
             Tetromino.call(this);
@@ -508,6 +523,9 @@ define(['jquery', 'underscore'], function() {
         };
         STetromino.prototype.type = "S";
 
+        /**
+         * @constructor
+         */
         function ZTetromino() {
             this.prototype = ZTetromino.prototype;
             Tetromino.call(this);
@@ -536,6 +554,9 @@ define(['jquery', 'underscore'], function() {
         };
         ZTetromino.prototype.type = "Z";
 
+        /**
+         * @constructor
+         */
         function LTetromino() {
             this.prototype = LTetromino.prototype;
             Tetromino.call(this);
@@ -596,6 +617,9 @@ define(['jquery', 'underscore'], function() {
         };
         LTetromino.prototype.type = "L";
 
+        /**
+         * @constructor
+         */
         function JTetromino() {
             this.prototype = JTetromino.prototype;
             Tetromino.call(this);
