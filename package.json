@@ -1,0 +1,26 @@
+{
+  "name": "tetris",
+  "version": "1.0.0",
+  "description": "a tetris game",
+  "main": "tetris.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaywritescode/tetris.git"
+  },
+  "keywords": [
+    "tetris"
+  ],
+  "author": "Jay Harris <jayharris@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jaywritescode/tetris/issues"
+  },
+  "homepage": "https://github.com/jaywritescode/tetris#readme",
+  "dependencies": {
+    "jquery": "^3.1.1",
+    "underscore": "^1.8.3"
+  }
+}

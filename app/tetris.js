@@ -1,3 +1,6 @@
+import $ from 'jquery';
+import _ from 'underscore';
+
 /**
  * Construct a new Tetris game
  * @param {jQuery} $element The element we .append() the game to
