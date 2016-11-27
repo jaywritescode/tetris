@@ -1,5 +1,5 @@
-import $ from 'jquery';
-import _ from 'underscore';
+var $ = require('jquery');
+var _ = require('underscore');
 
 /**
  * Construct a new Tetris game

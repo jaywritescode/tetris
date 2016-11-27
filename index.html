@@ -3,12 +3,12 @@
 <head>
     <meta charset="US-ASCII">
     <title>Tetris</title>
-    <script type="text/javascript" src="app/bower_components/jquery/dist/jquery.js"></script>
-    <script type="text/javascript" src="app/bower_components/underscore/underscore.js"></script>
-    <script type="text/javascript" src="app/tetris.js"></script>
+    <script type="text/javascript" src="build/tetris.js"></script>
     <script type="text/javascript">
+        var $ = require('jquery');
+
         $(document).ready(function() {
-           new Tetris($('#main')); 
+           new Tetris($('#main'));
         });
     </script>
 </head>
