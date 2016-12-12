@@ -5,7 +5,9 @@
   "main": "tetris.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify -r jquery -r underscore app/tetris.js >! build/tetris.js"
+    "build": "browserify -r jquery -r underscore app/tetris.js >! build/tetris.js",
+    "pandoc": "pandoc -f markdown -t html5 -s -o index.html index.md",
+    "tidy": "tidy --indent auto -m -q index.html"
   },
   "repository": {
     "type": "git",
