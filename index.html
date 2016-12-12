@@ -1,19 +1,50 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="US-ASCII">
-    <title>Tetris</title>
-    <script type="text/javascript" src="build/tetris.js"></script>
-    <script type="text/javascript">
-        var $ = require('jquery');
+  <meta name="generator" content=
+  "HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 15.18.1), see www.w3.org">
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content=
+  "width=device-width, initial-scale=1.0, user-scalable=yes">
 
-        $(document).ready(function() {
-           new Tetris($('#main'));
-        });
-    </script>
+  <title>Tetris</title>
+  <style type="text/css">
+code{white-space: pre;}
+  </style><!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
 </head>
+
 <body>
-    <p>Tetris:</p>
-    <div id="main"></div>
+  <script type="text/javascript" src="build/tetris.js">
+</script><script type="text/javascript">
+  var $ = require('jquery');
+
+    $(document).ready(function() {
+       new Tetris($('#main'));
+    });
+  </script>
+
+  <h1 id="tetris">Tetris</h1>
+
+  <div id="main"></div>
+
+  <h1 id="which-keys-to-mash">which keys to mash</h1>
+
+  <ul>
+    <li>The left and right arrow keys do exactly what you'd expect
+    them to do.</li>
+
+    <li>The space bar and down arrow are soft drop keys. Hard drop
+    isn't implemented.</li>
+
+    <li>The Z and X keys rotate the current tetromino
+    counter-clockwise and clockwise, respectively.</li>
+
+    <li>The P key pauses (and un-pauses) the game. So does the
+    "Pause Game" button. So does clicking outside of the game.</li>
+  </ul>
 </body>
 </html>
