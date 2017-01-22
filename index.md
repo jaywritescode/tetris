@@ -11,7 +11,7 @@ pagetitle: Tetris
     });
 </script>
 
-Tetris
+Tetris {#tetris_}
 ======
 
 <div id="main"></div>
